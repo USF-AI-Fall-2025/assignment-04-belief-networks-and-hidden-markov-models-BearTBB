@@ -1,14 +1,15 @@
-from pgmpy.models import BayesianNetwork
+from pgmpy.models import DiscreteBayesianNetwork
 from pgmpy.inference import VariableElimination
 from pgmpy.factors.discrete import TabularCPD
 
-car_model = BayesianNetwork(
+car_model = DiscreteBayesianNetwork(
     [
         ("Battery", "Radio"),
         ("Battery", "Ignition"),
         ("Ignition","Starts"),
         ("Gas","Starts"),
         ("Starts","Moves"),
+        ("KeyPresent", "Starts"),
 ])
 
 # Defining the parameters using CPT
@@ -42,13 +43,18 @@ cpd_ignition = TabularCPD(
                  "Battery": ['Works',"Doesn't work"]}
 )
 
+cpd_key = TabularCPD(
+    variable="KeyPresent", variable_card=2, values=[[0.7], [0.3]],
+    state_names={"KeyPresent":['yes',"no"]},
+)
+
 cpd_starts = TabularCPD(
     variable="Starts",
     variable_card=2,
-    values=[[0.95, 0.05, 0.05, 0.001], [0.05, 0.95, 0.95, 0.9999]],
-    evidence=["Ignition", "Gas"],
-    evidence_card=[2, 2],
-    state_names={"Starts":['yes','no'], "Ignition":["Works", "Doesn't work"], "Gas":['Full',"Empty"]},
+    values=[[0.99, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01], [0.01, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99]],
+    evidence=["Ignition", "Gas", "KeyPresent"],
+    evidence_card=[2, 2, 2],
+    state_names={"Starts":['yes','no'], "Ignition":["Works", "Doesn't work"], "Gas":['Full',"Empty"], "KeyPresent":["yes", "no"]},
 )
 
 cpd_moves = TabularCPD(
@@ -62,10 +68,36 @@ cpd_moves = TabularCPD(
 
 
 # Associating the parameters with the model structure
-car_model.add_cpds( cpd_starts, cpd_ignition, cpd_gas, cpd_radio, cpd_battery, cpd_moves)
+car_model.add_cpds( cpd_starts, cpd_ignition, cpd_gas, cpd_radio, cpd_battery, cpd_moves, cpd_key )
 
 car_infer = VariableElimination(car_model)
 
-print(car_infer.query(variables=["Moves"],evidence={"Radio":"turns on", "Starts":"yes"}))
+# print(car_infer.query(variables=["Moves"],evidence={"Radio":"turns on", "Starts":"yes"}))
 
+print("P(!B|!M)")
+print(car_infer.query(variables=["Battery"],evidence={"Moves":"no"}), "\n")
 
+print("P(!S|!R)")
+print(car_infer.query(variables=["Starts"],evidence={"Radio":"Doesn't turn on"}), "\n")
+
+print("P(R|B^G)")
+print(car_infer.query(variables=["Radio"],evidence={"Battery":"Works", "Gas":"Full"}), "\n")
+
+print("P(R|B^!G)")
+print(car_infer.query(variables=["Radio"],evidence={"Battery":"Works", "Gas":"Empty"}), "\n")
+
+print("P(R) Does not change.\n")
+
+print("P(!I|!M^G)")
+print(car_infer.query(variables=["Ignition"],evidence={"Moves":"no", "Gas":"Full"}), "\n")
+
+print("P(!I|!M^!G)")
+print(car_infer.query(variables=["Ignition"],evidence={"Moves":"no", "Gas":"Empty"}), "\n")
+
+print("P(!I) would decrease, because the car not moving has a higher chance to be caused by the not having gas, rather than the ignition failing.\n")
+
+print("P(S|R^G)")
+print(car_infer.query(variables=["Starts"],evidence={"Radio":"turns on", "Gas":"Full"}), "\n")
+
+print("P(!K|!M)")
+print(car_infer.query(variables=["KeyPresent"],evidence={"Moves":"no"}), "\n")
