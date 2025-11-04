@@ -219,22 +219,22 @@ and this makes static models less useful much more quickly if it cannot learn co
 ## References:
 Pseudocode from slides:
 
-M[t,s] = 0
-Backpointers[t,s] = 0 # this will keep our path to the best previous state.
-\#\# set up the initial probabilities from the start state (states[0] to observation 1.
-\#\# T is the transition probabilities, E is the emission probabilities, O is the vector of observations.
-for s in state_values :
-M[1,s] = T[states[0], s] * E[s, O[1]]
-\#\# the probability of that state * the probability of that state given observation 1.
-for o in observations : ## for each time step
-for s in state_values : ## for each possible hidden state
-al = max[ M[state2, o-1] * T[state2, s] *p(s, o) for state2 in state_values ].
-\#\# look at the likelihood of the sequence so far, times T, times the likelihood of that state, given the observation.
-M[s,o] = val
-Backpointers[s,o] = index(val)
-list = []
-Best = max(M[t,:]). #find the most likely state for time t
-for o in observations.reverse : # work backwards through time to the initial state
-list.push(best)
-best = backpointers[best, o] ## from this best state, what was the most likely state?
-return list
+M[t,s] = 0  
+Backpointers[t,s] = 0 # this will keep our path to the best previous state.  
+\#\# set up the initial probabilities from the start state (states[0] to observation 1.  
+\#\# T is the transition probabilities, E is the emission probabilities, O is the vector of observations.  
+for s in state_values :  
+M[1,s] = T[states[0], s] * E[s, O[1]]  
+\#\# the probability of that state * the probability of that state given observation 1.  
+for o in observations : ## for each time step  
+for s in state_values : ## for each possible hidden state  
+al = max[ M[state2, o-1] * T[state2, s] *p(s, o) for state2 in state_values ].  
+\#\# look at the likelihood of the sequence so far, times T, times the likelihood of that state, given the observation.  
+M[s,o] = val  
+Backpointers[s,o] = index(val)  
+list = []  
+Best = max(M[t,:]). #find the most likely state for time t  
+for o in observations.reverse : # work backwards through time to the initial state  
+list.push(best)  
+best = backpointers[best, o] ## from this best state, what was the most likely state?  
+return list  
